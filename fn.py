@@ -76,7 +76,7 @@ def get_server_issues(host,authtoken,node_id):
 
 def set_config_items(config,argv):
     try:
-        opts, args = getopt.getopt(argv, "hs:a",["search_string="])
+        opts, args = getopt.getopt(argv, "hs:c:a",["search_string=","configfile="])
     except getopt.GetoptError:
         print config['usagetext']
         sys.exit(2)
@@ -88,6 +88,9 @@ def set_config_items(config,argv):
             config['search_string'] = 'ALL'
         elif opt in ("-s","--search_string"):
             config['search_string'] = arg
+        elif opt in ("-c","--configfile"):
+            config['configfile'] = arg
+    execfile(config['configfile'], config)
     if not sanity_check(config):
         print "Config is not sane!"
         sys.exit(2)
