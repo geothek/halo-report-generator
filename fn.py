@@ -141,7 +141,7 @@ def sanity_check(c):
 
 def handle_output(config, serverolist):
     if config['output'] != None:
-        if config['output'] in ('html','pdf'):
-            dumper.html(serverolist, config['search_string'],config['output'])
+        if config['output'] in ('html', 'pdf'):
+            dumper.html(serverolist, config['search_string'], config['output'], config['logo_url'])
     if config['output'] == None:
         dumper.print_server_stuff_plain(serverolist)
