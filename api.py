@@ -11,9 +11,18 @@ import json
 import urlparse
 import sys
 
-def apihit(host,conntype,authtoken,queryurl,reqbody):
+def apihit(host,conntype,authtoken,queryurl,reqbody,prox):
     retdata = ''
-    connection = httplib.HTTPSConnection(host)
+    if (prox['host'] != '') and (prox['port'] != ''):
+        useproxy = True
+    else:
+        useproxy = False
+
+    if useproxy == True:
+        connection = httplib.HTTPSConnection(prox['host'], prox['port'])
+        connection.set_tunnel(host, 443)
+    else:
+        connection = httplib.HTTPSConnection(host)
     tokenheader = {"Authorization": 'Bearer ' + authtoken, "Content-type": "application/json", "Accept": "text/plain"}
     if conntype == "GET":
         connection.request(conntype, queryurl, '', tokenheader)
@@ -29,13 +38,21 @@ def apihit(host,conntype,authtoken,queryurl,reqbody):
     connection.close()
     return retdata
 
-def get_auth_token(host,clientid,clientsecret):
-    # Get the access token used for the API calls.
-    connection = httplib.HTTPSConnection(host)
+def get_auth_token(host,clientid,clientsecret,prox):
+    queryurl = '/oauth/access_token'
+    if (prox['host'] != '') and (prox['port'] != ''):
+        useproxy = True
+    else:
+        useproxy = False
+    if useproxy == True:
+        connection = httplib.HTTPSConnection(prox['host'], prox['port'])
+        connection.set_tunnel(host, 443)
+    else:
+        connection = httplib.HTTPSConnection(host)
     authstring = "Basic " + base64.b64encode(clientid + ":" + clientsecret)
     header = {"Authorization": authstring}
     params = urllib.urlencode({'grant_type': 'client_credentials'})
-    connection.request("POST", '/oauth/access_token', params, header)
+    connection.request("POST", queryurl, params, header)
     response = connection.getresponse()
     jsondata =  response.read().decode()
     data = json.loads(jsondata)

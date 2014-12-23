@@ -29,9 +29,9 @@ def cve_e_to_html(cve_enriched):
         html = html + str('<a href="' + str(l) + '">' + str(c) + '</a> ')
     return(html)
 
-def build_server_list(host, authtoken, srch, field):
+def build_server_list(host, authtoken, srch, field, prox):
     queryurl = '/v1/servers'
-    jsondata = api.apihit(host, 'GET', authtoken, queryurl, '')
+    jsondata = api.apihit(host, 'GET', authtoken, queryurl, '', prox)
     server_list = []
     if srch == 'ALL':
         prefix = '^.*'
@@ -50,10 +50,10 @@ def build_server_list(host, authtoken, srch, field):
     else:
         return(server_list)
 
-def enrich_server_data(host, authtoken, slist):
+def enrich_server_data(host, authtoken, slist, prox):
     returned_dataz = []
     for s in slist:
-        s.issues = get_server_issues(host, authtoken, s.id)
+        s.issues = get_server_issues(host, authtoken, s.id, prox)
         returned_dataz.append(s)
     return(returned_dataz)
 
@@ -69,9 +69,9 @@ def distil_server_list(jdata, prefix, field):
             relevant_list.append(s)
     return(relevant_list)
 
-def get_server_issues(host,authtoken,node_id):
+def get_server_issues(host,authtoken,node_id,prox):
     queryurl = '/v1/servers/'+str(node_id)+'/issues'
-    results = api.apihit(host, 'GET', authtoken, queryurl, '')
+    results = api.apihit(host, 'GET', authtoken, queryurl, '', prox)
     return(results)
 
 def set_config_items(config,argv):
@@ -94,7 +94,8 @@ def set_config_items(config,argv):
     if not sanity_check(config):
         print "Config is not sane!"
         sys.exit(2)
-    config['authtoken'] = api.get_auth_token(config['host'], config['clientid'], config['clientsecret'])
+    config['prox'] = {'host': config['prox_host'], 'port': config['prox_port'] }
+    config['authtoken'] = api.get_auth_token(config['host'], config['clientid'], config['clientsecret'], config['prox'])
     return(config)
 
 def sanity_check(c):
@@ -134,10 +135,37 @@ def sanity_check(c):
     if c['search_field'] not in search_fields:
         print "Bad search field value!"
         insane = True
+    if not whut_am_i(c['prox_host']) in ["valid_host", "valid_ip", "empty"]:
+        print "Bad proxy host value."
+        insane = True
+    if not whut_am_i(c['prox_port']) in ["valid_port", "empty"]:
+        print "Bad value for proxy port."
+        insane = True
     if insane == True:
         return False
     else:
         return True
+
+def whut_am_i(val):
+    regex_bundle = {
+            'ip_address': re.compile(r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'),
+            'hostname': re.compile(r'^[a-zA-Z0-9\-\.]+(\.[a-zA-Z]{2,3})?$'),
+            }
+    if val == '':
+        return('empty')
+    try:
+        val = int(val)
+    except:
+       pass
+    if type(val) == int and 0 < val < 65536:
+        return('valid_port')
+    elif regex_bundle['ip_address'].match:
+        return('valid_ip')
+    elif regex_bundle['hostname'].match:
+        return('valid_hostname')
+    else:
+        return('who_knows')
+
 
 def handle_output(config, serverolist):
     if config['output'] != None:
