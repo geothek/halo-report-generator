@@ -3,6 +3,7 @@
 import server
 import re
 import sys
+import os
 import getopt
 import api
 import json
@@ -141,6 +142,9 @@ def sanity_check(c):
     if not whut_am_i(c['prox_port']) in ["valid_port", "empty"]:
         print "Bad value for proxy port."
         insane = True
+    if where_is_img(c['logo_url'])[0] == 'web' and c['prox_host'] != '' and c['output'] == 'pdf':
+        print "If you're using a logo in your PDF report, and you require the use of a proxy, you must reference the logo from the local filesystem."
+        insane = True
     if insane == True:
         return False
     else:
@@ -159,13 +163,28 @@ def whut_am_i(val):
        pass
     if type(val) == int and 0 < val < 65536:
         return('valid_port')
-    elif regex_bundle['ip_address'].match:
+    elif regex_bundle['ip_address'].match(val):
         return('valid_ip')
-    elif regex_bundle['hostname'].match:
+    elif regex_bundle['hostname'].match(val):
         return('valid_hostname')
     else:
         return('who_knows')
 
+def where_is_img(path):
+    regex_bundle = {
+            'web_url': re.compile(r'^(http|https)://.*$'),
+            'local_path': re.compile(r'^(\./|\../|/)\S+$'),
+            }
+    if path == '':
+        return('', '')
+    elif regex_bundle['web_url'].match(path):
+        return('web', '')
+    elif regex_bundle['local_path'].match(path):
+        abspath = os.path.abspath(path)
+        return('local', abspath)
+    else:
+        print "Unable to interpret image path."
+        return('', '')
 
 def handle_output(config, serverolist):
     if config['output'] != None:
