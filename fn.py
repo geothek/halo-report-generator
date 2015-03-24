@@ -39,12 +39,24 @@ def build_server_list(host, authtoken, srch, field, prox):
     else:
         prefix = '^'+str(srch)+'.*'
     relevant_servers = distil_server_list(jsondata, prefix, field)
+
     for s in relevant_servers:
+
+        # Needed by Mr. Kozak
+        platform = s["platform"]
+        platform_version = s["platform_version"]
+        os = s["os_version"]
+        kernel = s["kernel_name"]
+        machine = s["kernel_machine"]
+
         name = s["hostname"]
         label = s["server_label"]
         ident = s["id"]
         gname = s["group_name"]
-        server_list.append(server.Server(name, ident, label, gname))
+
+        print (s["connecting_ip_address"] + ", " + name + ", " + platform_version + ", " + platform + ", " + os + ", " + kernel + ", " + machine)
+
+        server_list.append(server.Server(name, ident, label, gname, platform, platform_version, os, kernel, machine))
     if server_list == []:
         print "Did not find any matching servers to report on!"
         sys.exit(2)

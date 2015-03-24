@@ -50,7 +50,6 @@ def write_out(prefix, formt, content):
         f = open(fullname, 'w')
         f.write(content)
         f.close
-        print "Wrote output file: " + fullname
 
 def html(objex,prefix,formt,logo_url):
     raw_reports = {}
